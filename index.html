@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام إدارة التقسيط - شركة التمويل المتقدم</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3.2.0/dist/email.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Notification Area -->
+    <div id="notification-area" class="notification-area"></div>
+
+    <!-- Login Page -->
+    <div id="login-page" class="login-page">
+        <div class="login-container">
+            <div class="login-header">
+                <h1>نظام إدارة التقسيط</h1>
+                <h2>شركة التمويل المتقدم</h2>
+                <p>مرحباً بك في نظام إدارة التقسيط المتقدم</p>
+            </div>
+            <form id="login-form" class="login-form">
+                <div class="form-group">
+                    <label class="form-label" for="username">اسم المستخدم</label>
+                    <input type="text" id="username" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="password">كلمة المرور</label>
+                    <input type="password" id="password" class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn--primary btn--full-width">تسجيل الدخول</button>
+            </form>
+            <div class="login-footer">
+                <p>اسم المستخدم: <strong>admin</strong></p>
+                <p>كلمة المرور: <strong>123456</strong></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Application -->
+    <div id="main-app" class="main-app hidden">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h3>نظام التقسيط</h3>
+            </div>
+            <ul class="sidebar-menu">
+                <li><a href="#" onclick="showSection('dashboard')" class="active"><i class="fas fa-home"></i> لوحة التحكم</a></li>
+                <li><a href="#" onclick="showSection('customers')"><i class="fas fa-users"></i> إدارة العملاء</a></li>
+                <li><a href="#" onclick="showSection('loans')"><i class="fas fa-money-bill-wave"></i> إدارة القروض</a></li>
+                <li><a href="#" onclick="showSection('payments')"><i class="fas fa-credit-card"></i> إدارة المدفوعات</a></li>
+                <li><a href="#" onclick="showSection('contracts')"><i class="fas fa-file-contract"></i> العقود والمستندات</a></li>
+                <li><a href="#" onclick="showSection('reports')"><i class="fas fa-chart-bar"></i> التقارير والإحصائيات</a></li>
+                <li><a href="#" onclick="showSection('notifications')"><i class="fas fa-bell"></i> الإشعارات</a></li>
+                <li><a href="#" onclick="showSection('settings')"><i class="fas fa-cog"></i> الإعدادات</a></li>
+                <li><a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</a></li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="top-header">
+                <div class="header-left">
+                    <button class="sidebar-toggle" onclick="toggleSidebar()">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 id="page-title">لوحة التحكم</h1>
+                </div>
+                <div class="header-right">
+                    <div id="save-status" class="save-status"></div>
+                    <div class="user-info">
+                        <span>مرحباً، المدير</span>
+                        <button class="btn btn--secondary btn--sm" onclick="logout()">تسجيل الخروج</button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard Section -->
+            <section id="dashboard-section" class="content-section">
+                <div class="stats-cards">
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-money-bill-wave"></i></div>
+                        <div class="stat-content">
+                            <h3>إجمالي القروض</h3>
+                            <span id="total-loans-count" class="stat-number">0</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
+                        <div class="stat-content">
+                            <h3>القروض النشطة</h3>
+                            <span id="active-loans-count" class="stat-number">0</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-dollar-sign"></i></div>
+                        <div class="stat-content">
+                            <h3>إجمالي المبلغ</h3>
+                            <span id="total-amount" class="stat-number">0 ريال</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+                        <div class="stat-content">
+                            <h3>القروض المكتملة</h3>
+                            <span id="completed-loans-count" class="stat-number">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Section -->
+                <div class="charts-section">
+                    <div class="chart-container">
+                        <h3>توزيع القروض حسب الحالة</h3>
+                        <div style="position: relative; height: 300px;">
+                            <canvas id="loan-status-chart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <h3>الأداء الشهري</h3>
+                        <div style="position: relative; height: 300px;">
+                            <canvas id="monthly-performance-chart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <h3>نمو المحفظة</h3>
+                        <div style="position: relative; height: 300px;">
+                            <canvas id="portfolio-growth-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activities -->
+                <div class="recent-activities">
+                    <h3>أحدث العمليات</h3>
+                    <div id="recent-activities-list" class="activities-list">
+                        <!-- Activities will be populated by JavaScript -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Customers Section -->
+            <section id="customers-section" class="content-section hidden">
+                <div class="section-header">
+                    <h2>إدارة العملاء</h2>
+                    <button class="btn btn--primary" onclick="showAddCustomerModal()">
+                        <i class="fas fa-plus"></i> إضافة عميل جديد
+                    </button>
+                </div>
+                <div class="customers-table-container">
+                    <table class="data-table" id="customers-table">
+                        <thead>
+                            <tr>
+                                <th>الرقم</th>
+                                <th>الاسم الكامل</th>
+                                <th>رقم الهوية</th>
+                                <th>رقم الهاتف</th>
+                                <th>البريد الإلكتروني</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="customers-table-body">
+                            <!-- Customers will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Loans Section -->
+            <section id="loans-section" class="content-section hidden">
+                <div class="section-header">
+                    <h2>إدارة القروض</h2>
+                    <button class="btn btn--primary" onclick="showAddLoanModal()">
+                        <i class="fas fa-plus"></i> إضافة قرض جديد
+                    </button>
+                </div>
+                <div class="loans-grid" id="loans-grid">
+                    <!-- Loans will be populated by JavaScript -->
+                </div>
+            </section>
+
+            <!-- Payments Section -->
+            <section id="payments-section" class="content-section hidden">
+                <div class="section-header">
+                    <h2>إدارة المدفوعات</h2>
+                    <button class="btn btn--primary" onclick="showAddPaymentModal()">
+                        <i class="fas fa-plus"></i> تسجيل دفعة جديدة
+                    </button>
+                </div>
+                <div class="payments-table-container">
+                    <table class="data-table" id="payments-table">
+                        <thead>
+                            <tr>
+                                <th>رقم القرض</th>
+                                <th>العميل</th>
+                                <th>رقم القسط</th>
+                                <th>المبلغ</th>
+                                <th>تاريخ الاستحقاق</th>
+                                <th>الحالة</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="payments-table-body">
+                            <!-- Payments will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Contracts Section -->
+            <section id="contracts-section" class="content-section hidden">
+                <div class="section-header">
+                    <h2>العقود والمستندات</h2>
+                </div>
+                <div class="contracts-grid" id="contracts-grid">
+                    <!-- Contracts will be populated by JavaScript -->
+                </div>
+            </section>
+
+            <!-- Reports Section -->
+            <section id="reports-section" class="content-section hidden">
+                <div class="section-header">
+                    <h2>التقارير والإحصائيات</h2>
+                </div>
+                <div class="reports-grid">
+                    <div class="report-card">
+                        <h3>تقرير الأداء المالي</h3>
+                        <p>عرض شامل للأداء المالي العام</p>
+                        <button class="btn btn--primary" onclick="generateFinancialReport()">عرض التقرير</button>
+                    </div>
+                    <div class="report-card">
+                        <h3>تقرير العملاء والقروض</h3>
+                        <p>تقرير مفصل عن العملاء والقروض النشطة</p>
+                        <button class="btn btn--primary" onclick="generateCustomersReport()">عرض التقرير</button>
+                    </div>
+                    <div class="report-card">
+                        <h3>تقرير المتأخرات</h3>
+                        <p>قائمة بالأقساط المتأخرة والديون</p>
+                        <button class="btn btn--primary" onclick="generateOverdueReport()">عرض التقرير</button>
+                    </div>
+                    <div class="report-card">
+                        <h3>تقرير التدفق النقدي</h3>
+                        <p>تحليل التدفقات النقدية الشهرية</p>
+                        <button class="btn btn--primary" onclick="generateCashFlowReport()">عرض التقرير</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Notifications Section -->
+            <section id="notifications-section" class="content-section hidden">
+                <div class="section-header">
+                    <h2>الإشعارات</h2>
+                    <button class="btn btn--primary" onclick="markAllNotificationsRead()">
+                        <i class="fas fa-check-double"></i> تحديد الكل كمقروء
+                    </button>
+                </div>
+                <div class="notifications-list" id="notifications-list">
+                    <!-- Notifications will be populated by JavaScript -->
+                </div>
+            </section>
+
+            <!-- Settings Section -->
+            <section id="settings-section" class="content-section hidden">
+                <div class="section-header">
+                    <h2>الإعدادات</h2>
+                </div>
+                <div class="settings-grid">
+                    <div class="settings-card">
+                        <h3>إعدادات الشركة</h3>
+                        <form id="company-settings-form">
+                            <div class="form-group">
+                                <label class="form-label">اسم الشركة</label>
+                                <input type="text" class="form-control" id="company-name" value="شركة التمويل المتقدم">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">العنوان</label>
+                                <input type="text" class="form-control" id="company-address" value="الرياض، المملكة العربية السعودية">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">رقم الهاتف</label>
+                                <input type="text" class="form-control" id="company-phone" value="+966 11 123 4567">
+                            </div>
+                            <button type="submit" class="btn btn--primary">حفظ التغييرات</button>
+                        </form>
+                    </div>
+                    <div class="settings-card">
+                        <h3>إعدادات النظام</h3>
+                        <form id="system-settings-form">
+                            <div class="form-group">
+                                <label class="form-label">معدل الفائدة الافتراضي (%)</label>
+                                <input type="number" class="form-control" id="default-interest-rate" value="8.5" step="0.1">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">فترة السماح (أيام)</label>
+                                <input type="number" class="form-control" id="grace-period" value="7">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">غرامة التأخير (%)</label>
+                                <input type="number" class="form-control" id="late-fee" value="2.5" step="0.1">
+                            </div>
+                            <button type="submit" class="btn btn--primary">حفظ الإعدادات</button>
+                        </form>
+                    </div>
+                    <div class="settings-card">
+                        <h3>النسخ الاحتياطي</h3>
+                        <p>إدارة النسخ الاحتياطية للبيانات</p>
+                        <div class="backup-actions">
+                            <button class="btn btn--secondary" onclick="createBackup()">
+                                <i class="fas fa-download"></i> إنشاء نسخة احتياطية
+                            </button>
+                            <input type="file" id="backup-file" accept=".json" style="display: none;" onchange="restoreBackup(this.files[0])">
+                            <button class="btn btn--secondary" onclick="document.getElementById('backup-file').click()">
+                                <i class="fas fa-upload"></i> استعادة نسخة احتياطية
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <!-- Add Customer Modal -->
+    <div id="add-customer-modal" class="modal hidden">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>إضافة عميل جديد</h3>
+                <button class="modal-close" onclick="hideModal('add-customer-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="add-customer-form">
+                    <div class="form-group">
+                        <label class="form-label">الاسم الكامل</label>
+                        <input type="text" class="form-control" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">رقم الهوية الوطنية</label>
+                        <input type="text" class="form-control" name="national_id" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">رقم الهاتف</label>
+                        <input type="text" class="form-control" name="phone" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">البريد الإلكتروني</label>
+                        <input type="email" class="form-control" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">العنوان التفصيلي</label>
+                        <textarea class="form-control" name="address" rows="3" required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn--primary" onclick="addCustomer()">إضافة العميل</button>
+                <button class="btn btn--secondary" onclick="hideModal('add-customer-modal')">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Loan Modal -->
+    <div id="add-loan-modal" class="modal hidden">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>إضافة قرض جديد</h3>
+                <button class="modal-close" onclick="hideModal('add-loan-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="add-loan-form">
+                    <div class="form-group">
+                        <label class="form-label">اختيار العميل</label>
+                        <select class="form-control" name="customer_id" required>
+                            <option value="">اختر العميل</option>
+                            <!-- Options will be populated by JavaScript -->
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">مبلغ القرض (ريال)</label>
+                            <input type="number" class="form-control" name="amount" min="10000" max="1000000" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">معدل الفائدة (%)</label>
+                            <input type="number" class="form-control" name="interest_rate" step="0.1" value="8.5" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">مدة السداد (شهر)</label>
+                            <input type="number" class="form-control" name="duration_months" min="6" max="60" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">تاريخ البداية</label>
+                            <input type="date" class="form-control" name="start_date" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">الغرض من القرض</label>
+                        <input type="text" class="form-control" name="purpose" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn--primary" onclick="addLoan()">إضافة القرض</button>
+                <button class="btn btn--secondary" onclick="hideModal('add-loan-modal')">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contract Modal -->
+    <div id="contract-modal" class="modal hidden">
+        <div class="modal-overlay"></div>
+        <div class="modal-content contract-modal">
+            <div class="modal-header">
+                <h3>عقد التمويل</h3>
+                <div class="contract-actions">
+                    <button class="btn btn--primary btn--sm" onclick="printContract()">
+                        <i class="fas fa-print"></i> طباعة
+                    </button>
+                    <button class="btn btn--primary btn--sm" onclick="downloadContractPDF()">
+                        <i class="fas fa-download"></i> تحميل PDF
+                    </button>
+                    <button class="btn btn--primary btn--sm" onclick="sendContractEmail()">
+                        <i class="fas fa-envelope"></i> إرسال إيميل
+                    </button>
+                </div>
+                <button class="modal-close" onclick="hideModal('contract-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="contract-content" class="contract-content">
+                    <!-- Contract content will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay hidden">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <p>جاري المعالجة...</p>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
